@@ -21,6 +21,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.telephony.TelephonyManager;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.Menu;
@@ -37,6 +38,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -84,6 +86,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         msg("开始连接小方");
+     //   openMijia();
         WifiConnector connector = new WifiConnector(this,
                 "isa-camera-isc5_miap9EA6",
                 "NEW_BSSID",
@@ -96,24 +99,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void successfulConnect(String SSID) {
                 msg("连接成功！");
-                Intent intent = new Intent();
-                PackageManager packageManager = getPackageManager();
-                intent = packageManager.getLaunchIntentForPackage("com.xiaomi.smarthome");
-                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED | Intent.FLAG_ACTIVITY_CLEAR_TOP) ;
-                startActivity(intent);
-                WindowManager wm = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
-                DisplayMetrics dm = new DisplayMetrics();
-                wm.getDefaultDisplay().getMetrics(dm);
-                int x0 = dm.widthPixels/3;
-                int y0 = dm.heightPixels/2;
-                for(int i=0; i<20; i++) {
-                    try {
-                        Thread.sleep(2000);
-                    } catch (InterruptedException e) {
-
-                    }
-                    clickXF(x0, y0 - y0 / 30);
-                }
+                openMijia();
             }
 
             @Override
@@ -152,11 +138,42 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void clickXF(int x1,int y1){
+        OutputStream os = null;
+        String cmd = "input tap "+x1+" "+y1;
+        try {
+            if (os == null) {
+                os = Runtime.getRuntime().exec("su").getOutputStream();
+            }
+            os.write(cmd.getBytes());
+            os.flush();
+        } catch (Exception e) {
+            e.printStackTrace();
+            msg(e.getMessage());
+        }
         Instrumentation mInst = new Instrumentation();
         mInst.sendPointerSync(MotionEvent.obtain(SystemClock.uptimeMillis(),
                 SystemClock.uptimeMillis(), MotionEvent.ACTION_DOWN, x1, y1, 0));    //x,y 即是事件的坐标
         mInst.sendPointerSync(MotionEvent.obtain(SystemClock.uptimeMillis(),
                 SystemClock.uptimeMillis(), MotionEvent.ACTION_UP, x1, y1, 0));
+
+    }
+    public void openMijia(){
+        Intent intent = new Intent();
+        PackageManager packageManager = getPackageManager();
+        intent = packageManager.getLaunchIntentForPackage("com.xiaomi.smarthome");
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED | Intent.FLAG_ACTIVITY_CLEAR_TOP) ;
+        startActivity(intent);
+//        int x0 = 200;
+//        int y0 = 500;
+//        for(int i=0; i<5; i++) {
+//            try {
+//                Thread.sleep(2000);
+//            } catch (InterruptedException e) {
+//
+//            }
+//            clickXF(x0, y0);
+//            msg("click "+i);
+//        }
 
     }
 
